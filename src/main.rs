@@ -1,4 +1,5 @@
 use text_io::read;
+use std::ops::Add;
 
 fn main() {
     let mut game = Game::new();
@@ -18,7 +19,34 @@ struct Game {
 }
 
 struct Area {
-    description: String
+    description: String,
+    inventory: Vec<Item>
+}
+
+impl Area {
+    fn meadows() -> Area {
+        Area {
+            description: String::from("Your feet rest upon green meadows."),
+            inventory: vec![ Item { name: String::from("Potion") } ]
+        }
+    }
+
+    fn look(&self) -> String {
+        let mut thing = self.description.clone();
+        thing.push_str("\nYou look around, and see:\n");
+
+        let mut i = 1;
+        for item in self.inventory.iter() {
+            thing.push_str(&format!("{}: {}", i, item.name)[..]);
+            i.add(1);
+        }
+
+        thing
+    }
+}
+
+struct Item {
+    name: String
 }
 
 struct Player {
@@ -31,7 +59,7 @@ impl Game {
             is_running: true,
             last_message: "".to_string(),
             player: Player {},
-            area: Area { description: String::from("Your feet rest upon green meadows.") }
+            area: Area::meadows()
         }
     }
 
@@ -41,7 +69,7 @@ impl Game {
             Game { last_message: String::from("Ye giveth up like a whiny little child"), is_running: false, ..self }
         }
         else if inputs[0].eq("look") {
-            Game { last_message: self.area.description.clone(), ..self }
+            Game { last_message: self.area.look(), ..self }
         }
         else {
             Game { last_message: input, ..self }
@@ -65,6 +93,6 @@ mod tests {
     fn look_around() {
         let mut game = Game::new();
         game = game.process("look".to_string());
-        assert_eq!("Your feet rest upon green meadows.", game.last_message)
+        assert_eq!("Your feet rest upon green meadows.\nYou look around, and see:\n1: Potion", game.last_message)
     }
 }
