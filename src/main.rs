@@ -1,5 +1,4 @@
 use text_io::read;
-use std::ops::Add;
 
 fn main() {
     let mut game = Game::new();
@@ -32,16 +31,14 @@ impl Area {
     }
 
     fn look(&self) -> String {
-        let mut thing = self.description.clone();
-        thing.push_str("\nYou look around, and see:\n");
+        let mut description = self.description.clone();
+        description.push_str("\nYou look around, and see:\n");
 
-        let mut i = 1;
-        for item in self.inventory.iter() {
-            thing.push_str(&format!("{}: {}", i, item.name)[..]);
-            i.add(1);
-        }
+        description.push_str(&self.inventory.iter().enumerate()
+            .map(|(i, item)| format!("{}: {}", i + 1, item.name))
+            .reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or(String::from("Nothing."))[..]);
 
-        thing
+        description
     }
 }
 
@@ -64,7 +61,7 @@ impl Game {
     }
 
     fn process(self, input: String) -> Game {
-        let inputs = input.split_whitespace().collect::<Vec<&str>>();;
+        let inputs = input.split_whitespace().collect::<Vec<&str>>();
         if inputs[0].eq("exit") {
             Game { last_message: String::from("Ye giveth up like a whiny little child"), is_running: false, ..self }
         }
