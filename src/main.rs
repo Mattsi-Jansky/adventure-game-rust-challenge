@@ -1,7 +1,7 @@
 use text_io::read;
 
 fn main() {
-    let mut game = Game::new();
+    let mut game = GameState::new();
     while game.is_running {
         println!("Please enter a command:");
         let line: String = read!("{}\n");
@@ -10,7 +10,7 @@ fn main() {
     }
 }
 
-struct Game {
+struct GameState {
     pub is_running: bool,
     pub last_message: String,
     player: Player,
@@ -50,9 +50,9 @@ struct Player {
 
 }
 
-impl Game {
-    fn new() -> Game {
-        Game {
+impl GameState {
+    fn new() -> GameState {
+        GameState {
             is_running: true,
             last_message: "".to_string(),
             player: Player {},
@@ -60,27 +60,27 @@ impl Game {
         }
     }
 
-    fn process(self, input: String) -> Game {
+    fn process(self, input: String) -> GameState {
         let inputs = input.split_whitespace().collect::<Vec<&str>>();
         if inputs[0].eq("exit") {
-            Game { last_message: String::from("Ye giveth up like a whiny little child"), is_running: false, ..self }
+            GameState { last_message: String::from("Ye giveth up like a whiny little child"), is_running: false, ..self }
         }
         else if inputs[0].eq("look") {
-            Game { last_message: self.area.look(), ..self }
+            GameState { last_message: self.area.look(), ..self }
         }
         else {
-            Game { last_message: input, ..self }
+            GameState { last_message: input, ..self }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Game;
+    use crate::GameState;
 
     #[test]
     fn exit_changes_is_running_state_to_false() {
-        let mut game = Game::new();
+        let mut game = GameState::new();
         assert_eq!(true, game.is_running);
         game = game.process("exit".to_string());
         assert_eq!(false, game.is_running);
@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn look_around() {
-        let mut game = Game::new();
+        let mut game = GameState::new();
         game = game.process("look".to_string());
         assert_eq!("Your feet rest upon green meadows.\nYou look around, and see:\n1: Potion", game.last_message)
     }
