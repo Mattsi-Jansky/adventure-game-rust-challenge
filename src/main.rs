@@ -1,20 +1,31 @@
 use text_io::read;
 
 fn main() {
-    let mut game = GameState::new();
-    while game.is_running {
-        println!("Please enter a command:");
-        let line: String = read!("{}\n");
-        game = game.process(line);
-        println!("{}", game.last_message);
+    let mut game = Game::Running(GameState::new());
+    loop {
+        match game {
+            Game::Running(game_state) => {
+                game_state.last_message.print();
+                println!("Please enter a command:");
+                let line: String = read!("{}\n");
+                game = game_state.process(line);
+            }
+            Game::NotRunning(final_message) => {
+                println!("{}", final_message);
+                break;
+            }
+        }
     }
 }
 
-struct GameState {
-    pub is_running: bool,
-    pub last_message: String,
-    player: Player,
-    area: Area
+struct GameMessage {
+    contents: String
+}
+
+impl GameMessage {
+    fn print(&self) {
+        println!("{}", self.contents);
+    }
 }
 
 struct Area {
@@ -30,7 +41,7 @@ impl Area {
         }
     }
 
-    fn look(&self) -> String {
+    fn look(&self) -> GameMessage {
         let mut description = self.description.clone();
         description.push_str("\nYou look around, and see:\n");
 
@@ -38,7 +49,7 @@ impl Area {
             .map(|(i, item)| format!("{}: {}", i + 1, item.name))
             .reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or(String::from("Nothing."))[..]);
 
-        description
+        GameMessage { contents: description }
     }
 }
 
@@ -50,46 +61,68 @@ struct Player {
 
 }
 
+enum Game {
+    Running(GameState),
+    NotRunning(String)
+}
+
+struct GameState {
+    pub last_message: GameMessage,
+    player: Player,
+    area: Area
+}
+
 impl GameState {
     fn new() -> GameState {
         GameState {
-            is_running: true,
-            last_message: "".to_string(),
+            last_message: GameMessage { contents: String::new() },
             player: Player {},
             area: Area::meadows()
         }
     }
 
-    fn process(self, input: String) -> GameState {
+    fn process(self, input: String) -> Game {
         let inputs = input.split_whitespace().collect::<Vec<&str>>();
         if inputs[0].eq("exit") {
-            GameState { last_message: String::from("Ye giveth up like a whiny little child"), is_running: false, ..self }
+            Game::NotRunning(String::from("Ye hath not the faith to go on"))
         }
         else if inputs[0].eq("look") {
-            GameState { last_message: self.area.look(), ..self }
+            Game::Running(GameState { last_message: self.area.look(), ..self })
         }
         else {
-            GameState { last_message: input, ..self }
+            Game::Running(GameState { last_message: GameMessage { contents: input }, ..self })
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::GameState;
+    use crate::{GameState, Game};
+
+    impl Game {
+        fn assert_message(self, expected: String) {
+            match self {
+                Game::Running(game_state) => {
+                    assert_eq!(expected, game_state.last_message.contents);
+                },
+                Game::NotRunning(final_message) => {
+                    assert_eq!(expected, final_message);
+                }
+            }
+        }
+    }
 
     #[test]
     fn exit_changes_is_running_state_to_false() {
-        let mut game = GameState::new();
-        assert_eq!(true, game.is_running);
-        game = game.process("exit".to_string());
-        assert_eq!(false, game.is_running);
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("exit"));
+        assert!(matches!(game, Game::NotRunning { .. }));
     }
 
     #[test]
     fn look_around() {
-        let mut game = GameState::new();
-        game = game.process("look".to_string());
-        assert_eq!("Your feet rest upon green meadows.\nYou look around, and see:\n1: Potion", game.last_message)
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("look"));
+        game.assert_message(String::from("Your feet rest upon green meadows.\nYou look around, and see:\n1: Potion"));
     }
 }
