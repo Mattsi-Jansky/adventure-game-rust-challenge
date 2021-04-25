@@ -72,6 +72,12 @@ impl Inventory {
         Inventory { items: new }
     }
 
+    fn without(self, index: usize) -> Inventory {
+        let mut new: Vec<Item> = self.items.clone();
+        new.remove(index);
+        Inventory { items: new }
+    }
+
     fn look(&self) -> GameMessage {
         GameMessage { contents: format!("Your inventory:\n{}", self) }
     }
@@ -129,6 +135,7 @@ impl GameState {
                 Game::Running(GameState {
                     last_message: GameMessage { contents: String::from(format!("You pickup the {}", item.name)) },
                     inventory: self.inventory.with(item),
+                    area: Area { inventory: self.area.inventory.without(index), ..self.area },
                     ..self
                 })
             }
@@ -198,5 +205,18 @@ mod tests {
             _ => panic!("Expected game to be running")
         };
         game.assert_message("Your inventory:\n1: Potion");
+    }
+
+    #[test]
+    fn picked_up_items_no_longer_in_area() {
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("pickup 1"));
+        let game = match game {
+            Game::Running(game_state) => {
+                game_state.process(String::from("look"))
+            }
+            _ => panic!("Expected game to be running")
+        };
+        game.assert_message("Your feet rest upon green meadows.\nYou look around, and see:\nNothing.");
     }
 }
