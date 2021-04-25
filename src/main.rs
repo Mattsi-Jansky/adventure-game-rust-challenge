@@ -145,6 +145,9 @@ impl GameState {
             "exit" => {
                 Game::NotRunning(String::from("Ye hath not the faith to go on"))
             }
+            "help" => {
+                Game::Running(GameState { last_message: GameMessage { contents: String::from("Known commands are:\nlook\npickup\nexit\nhelp") }, ..self })
+            }
             _ => {
                 Game::Running(GameState { last_message: GameMessage{
                     contents: format!("Ye sepaketh nonsense, I know not the command '{}'. Try 'help'.", inputs[0])
@@ -218,5 +221,12 @@ mod tests {
             _ => panic!("Expected game to be running")
         };
         game.assert_message("Your feet rest upon green meadows.\nYou look around, and see:\nNothing.");
+    }
+
+    #[test]
+    fn print_help_Message() {
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("help"));
+        game.assert_message("Known commands are:\nlook\npickup\nexit\nhelp");
     }
 }
