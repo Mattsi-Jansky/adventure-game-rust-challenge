@@ -1,4 +1,7 @@
 use text_io::read;
+use core::fmt;
+use std::fmt::Formatter;
+use std::ops::Index;
 
 fn main() {
     let mut game = Game::Running(GameState::new());
@@ -30,35 +33,68 @@ impl GameMessage {
 
 struct Area {
     description: String,
-    inventory: Vec<Item>
+    inventory: Inventory
 }
 
 impl Area {
     fn meadows() -> Area {
         Area {
             description: String::from("Your feet rest upon green meadows."),
-            inventory: vec![ Item { name: String::from("Potion") } ]
+            inventory: Inventory { items: vec![ Item { name: String::from("Potion") } ] }
         }
     }
 
     fn look(&self) -> GameMessage {
         let mut description = self.description.clone();
-        description.push_str("\nYou look around, and see:\n");
-
-        description.push_str(&self.inventory.iter().enumerate()
-            .map(|(i, item)| format!("{}: {}", i + 1, item.name))
-            .reduce(|a, b| format!("{}\n{}", a, b)).unwrap_or(String::from("Nothing."))[..]);
+        description.push_str(&format!("\nYou look around, and see:\n{}", self.inventory));
 
         GameMessage { contents: description }
     }
 }
 
+#[derive(Clone)]
 struct Item {
     name: String
 }
 
-struct Player {
+struct Inventory {
+    items: Vec<Item>
+}
 
+impl Inventory {
+    fn new() -> Inventory {
+        Inventory { items: vec![] }
+    }
+
+    fn with (self, item: Item) -> Inventory {
+        let mut new: Vec<Item> = self.items.clone();
+        new.push(item);
+        Inventory { items: new }
+    }
+
+    fn look(&self) -> GameMessage {
+        GameMessage { contents: format!("Your inventory:\n{}", self) }
+    }
+}
+
+impl fmt::Display for Inventory {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}",
+               &self.items.iter().enumerate()
+                .map(|(i, item)| format!("{}: {}", i + 1, item.name))
+                .reduce(|a, b| format!("{}\n{}", a, b))
+                .unwrap_or(String::from("Nothing."))[..]
+        )
+    }
+}
+
+impl Index<&'_ usize> for Inventory {
+    type Output = Item;
+
+    fn index(&self, index: &usize) -> &Item {
+        let index = index.clone();
+        &self.items[index]
+    }
 }
 
 enum Game {
@@ -68,7 +104,7 @@ enum Game {
 
 struct GameState {
     pub last_message: GameMessage,
-    player: Player,
+    inventory: Inventory,
     area: Area
 }
 
@@ -76,21 +112,37 @@ impl GameState {
     fn new() -> GameState {
         GameState {
             last_message: GameMessage { contents: String::new() },
-            player: Player {},
+            inventory: Inventory::new(),
             area: Area::meadows()
         }
     }
 
     fn process(self, input: String) -> Game {
         let inputs = input.split_whitespace().collect::<Vec<&str>>();
-        if inputs[0].eq("exit") {
-            Game::NotRunning(String::from("Ye hath not the faith to go on"))
-        }
-        else if inputs[0].eq("look") {
-            Game::Running(GameState { last_message: self.area.look(), ..self })
-        }
-        else {
-            Game::Running(GameState { last_message: GameMessage { contents: input }, ..self })
+        match inputs[0] {
+            "look" => {
+                Game::Running(GameState { last_message: self.area.look(), ..self })
+            }
+            "pickup" => {
+                let index = inputs[1].parse::<usize>().unwrap() - 1;
+                let item = self.area.inventory[&index].clone();
+                Game::Running(GameState {
+                    last_message: GameMessage { contents: String::from(format!("You pickup the {}", item.name)) },
+                    inventory: self.inventory.with(item),
+                    ..self
+                })
+            }
+            "inventory" => {
+                Game::Running(GameState { last_message: self.inventory.look(), ..self })
+            }
+            "exit" => {
+                Game::NotRunning(String::from("Ye hath not the faith to go on"))
+            }
+            _ => {
+                Game::Running(GameState { last_message: GameMessage{
+                    contents: format!("Ye sepaketh nonsense, I know not the command '{}'. Try 'help'.", inputs[0])
+                }, ..self })
+            }
         }
     }
 }
@@ -100,13 +152,14 @@ mod tests {
     use crate::{GameState, Game};
 
     impl Game {
-        fn assert_message(self, expected: String) {
+        fn assert_message(&self, expected: &str) {
+            let expected = String::from(expected);
             match self {
                 Game::Running(game_state) => {
                     assert_eq!(expected, game_state.last_message.contents);
                 },
                 Game::NotRunning(final_message) => {
-                    assert_eq!(expected, final_message);
+                    assert_eq!(expected, final_message.to_owned());
                 }
             }
         }
@@ -123,6 +176,27 @@ mod tests {
     fn look_around() {
         let game_state = GameState::new();
         let game = game_state.process(String::from("look"));
-        game.assert_message(String::from("Your feet rest upon green meadows.\nYou look around, and see:\n1: Potion"));
+        game.assert_message("Your feet rest upon green meadows.\nYou look around, and see:\n1: Potion");
+    }
+
+    #[test]
+    fn respond_helpfully_to_unknown_commands() {
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("gibberish"));
+        game.assert_message("Ye sepaketh nonsense, I know not the command 'gibberish'. Try 'help'.");
+    }
+
+    #[test]
+    fn pickup_item() {
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("pickup 1"));
+        game.assert_message("You pickup the Potion");
+        let game = match game {
+            Game::Running(game_state) => {
+                game_state.process(String::from("inventory"))
+            }
+            _ => panic!("Expected game to be running")
+        };
+        game.assert_message("Your inventory:\n1: Potion");
     }
 }
