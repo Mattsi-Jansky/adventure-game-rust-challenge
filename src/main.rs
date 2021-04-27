@@ -5,15 +5,18 @@ use std::ops::Index;
 use text_io::read;
 
 use crate::area::Area;
-use crate::inventory::{Inventory, Item};
+use crate::inventory::{Inventory};
 use crate::game::{Game, GameState};
+use crate::consumable::{Consumable, Potion};
 
 mod inventory;
 mod area;
 mod game;
+mod consumable;
+mod player;
 
 fn main() {
-    let mut game = Game::Running(GameState::new());
+    let mut game : Game<Potion> = Game::Running(GameState::new());
     loop {
         match game {
             Game::Running(game_state) => {

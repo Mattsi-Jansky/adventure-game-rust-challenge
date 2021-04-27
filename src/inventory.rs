@@ -2,33 +2,29 @@ use core::fmt;
 use core::fmt::Formatter;
 use crate::game::GameMessage;
 use std::ops::Index;
+use crate::consumable::Consumable;
 
-#[derive(Clone)]
-pub struct Item {
-    pub name: String
+pub struct Inventory<T: Consumable> {
+    items: Vec<T>
 }
 
-pub struct Inventory {
-    items: Vec<Item>
-}
-
-impl Inventory {
-    pub fn new() -> Inventory {
+impl<T: Consumable> Inventory<T> {
+    pub fn new() -> Inventory<T> {
         Inventory { items: vec![] }
     }
 
-    pub fn from(items: Vec<Item>) -> Inventory {
+    pub fn from(items: Vec<T>) -> Inventory<T> {
         Inventory { items }
     }
 
-    pub fn with (self, item: Item) -> Inventory {
-        let mut new: Vec<Item> = self.items.clone();
+    pub fn with (self, item: T) -> Inventory<T> {
+        let mut new: Vec<dyn Consumable> = self.items.clone();
         new.push(item);
         Inventory { items: new }
     }
 
-    pub fn without(self, index: usize) -> Inventory {
-        let mut new: Vec<Item> = self.items.clone();
+    pub fn without(self, index: usize) -> Inventory<T> {
+        let mut new: Vec<dyn Consumable> = self.items.clone();
         new.remove(index);
         Inventory { items: new }
     }
@@ -38,7 +34,7 @@ impl Inventory {
     }
 }
 
-impl fmt::Display for Inventory {
+impl<T: Consumable> fmt::Display for Inventory<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}",
                &self.items.iter().enumerate()
@@ -49,10 +45,10 @@ impl fmt::Display for Inventory {
     }
 }
 
-impl Index<&'_ usize> for Inventory {
-    type Output = Item;
+impl<T: Consumable> Index<&'_ usize> for Inventory<T> {
+    type Output = T;
 
-    fn index(&self, index: &usize) -> &Item {
+    fn index(&self, index: &usize) -> &T {
         let index = index.clone();
         &self.items[index]
     }

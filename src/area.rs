@@ -1,16 +1,17 @@
-use crate::inventory::{Inventory, Item};
+use crate::inventory::{Inventory};
 use crate::game::GameMessage;
+use crate::consumable::{Consumable, Potion};
 
-pub struct Area {
+pub struct Area<T: Consumable> {
     description: String,
-    inventory: Inventory
+    inventory: Inventory<T>
 }
 
-impl Area {
-    pub fn meadows() -> Area {
+impl<T: Consumable> Area<T> {
+    pub fn meadows() -> Area<T> {
         Area {
             description: String::from("Your feet rest upon green meadows."),
-            inventory: Inventory::from(vec![ Item { name: String::from("Potion") } ])
+            inventory: Inventory::from(vec![ Potion {} ])
         }
     }
 
@@ -21,11 +22,11 @@ impl Area {
         GameMessage::new(&description[..])
     }
 
-    pub fn without_item(self, index: usize) -> Area {
+    pub fn without_item(self, index: usize) -> Area<T> {
         Area { inventory: self.inventory.without(index), ..self }
     }
 
-    pub fn get_from_inventory(&self, index: &usize) -> Item {
+    pub fn get_from_inventory(&self, index: &usize) -> T {
         self.inventory[index].clone()
     }
 }
