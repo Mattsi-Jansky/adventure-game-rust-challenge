@@ -1,4 +1,4 @@
-use crate::inventory::{Inventory, Item};
+use crate::inventory::{Inventory, Item, ItemType};
 use crate::game::GameMessage;
 
 pub struct Area {
@@ -10,7 +10,7 @@ impl Area {
     pub fn meadows() -> Area {
         Area {
             description: String::from("Your feet rest upon green meadows."),
-            inventory: Inventory::from(vec![ Item { name: String::from("Potion") } ])
+            inventory: Inventory::from(vec![ Item { name: String::from("Potion"), item_type: ItemType::Potion } ])
         }
     }
 

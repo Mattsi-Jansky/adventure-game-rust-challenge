@@ -1,4 +1,4 @@
-use crate::inventory::Inventory;
+use crate::inventory::{Inventory, ItemType};
 use crate::area::Area;
 
 pub struct GameMessage {
@@ -23,7 +23,8 @@ pub enum Game {
 pub struct GameState {
     pub last_message: GameMessage,
     inventory: Inventory,
-    area: Area
+    area: Area,
+    health: usize
 }
 
 impl GameState {
@@ -31,7 +32,8 @@ impl GameState {
         GameState {
             last_message: GameMessage { contents: String::new() },
             inventory: Inventory::new(),
-            area: Area::meadows()
+            area: Area::meadows(),
+            health: 10
         }
     }
 
@@ -53,6 +55,24 @@ impl GameState {
             }
             "inventory" => {
                 Game::Running(GameState { last_message: self.inventory.look(), ..self })
+            }
+            "status" => {
+                Game::Running(GameState { last_message:
+                    GameMessage { contents: format!("Level:{}\nHealth:{}", 1, self.health ) },
+                    ..self
+                })
+            },
+            "use" => {
+                let index = inputs[1].parse::<usize>().unwrap() - 1;
+                let item = self.inventory[&index].clone();
+                match item.item_type {
+                    ItemType::Potion => Game::Running(GameState {
+                        last_message: GameMessage { contents: String::from(String::from("You drink the Potion.")) },
+                        inventory: self.inventory.with(item),
+                        health: self.health + 1,
+                        ..self
+                    })
+                }
             }
             "exit" => {
                 Game::NotRunning(String::from("Ye hath not the faith to go on"))
@@ -85,6 +105,15 @@ mod tests {
                 }
             }
         }
+
+        fn process(self, command: &str) -> Game {
+            match self {
+                Game::Running(game_state) => {
+                    game_state.process(String::from(command))
+                }
+                _ => panic!("Expected game to be running")
+            }
+        }
     }
 
     #[test]
@@ -113,12 +142,7 @@ mod tests {
         let game_state = GameState::new();
         let game = game_state.process(String::from("pickup 1"));
         game.assert_message("You pickup the Potion");
-        let game = match game {
-            Game::Running(game_state) => {
-                game_state.process(String::from("inventory"))
-            }
-            _ => panic!("Expected game to be running")
-        };
+        let game = game.process("inventory");
         game.assert_message("Your inventory:\n1: Potion");
     }
 
@@ -126,12 +150,7 @@ mod tests {
     fn picked_up_items_no_longer_in_area() {
         let game_state = GameState::new();
         let game = game_state.process(String::from("pickup 1"));
-        let game = match game {
-            Game::Running(game_state) => {
-                game_state.process(String::from("look"))
-            }
-            _ => panic!("Expected game to be running")
-        };
+        let game = game.process("look");
         game.assert_message("Your feet rest upon green meadows.\nYou look around, and see:\nNothing.");
     }
 
@@ -140,5 +159,22 @@ mod tests {
         let game_state = GameState::new();
         let game = game_state.process(String::from("help"));
         game.assert_message("Known commands are:\nlook\npickup\nexit\nhelp");
+    }
+
+    #[test]
+    fn display_status() {
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("status"));
+        game.assert_message("Level:1\nHealth:10");
+    }
+
+    #[test]
+    fn drinking_potion_increases_health() {
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("pickup 1"));
+        let game = game.process("use 1");
+        game.assert_message("You drink the Potion.");
+        let game = game.process("status");
+        game.assert_message("Level:1\nHealth:11");
     }
 }

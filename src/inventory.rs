@@ -4,8 +4,14 @@ use crate::game::GameMessage;
 use std::ops::Index;
 
 #[derive(Clone)]
+pub enum ItemType {
+    Potion
+}
+
+#[derive(Clone)]
 pub struct Item {
-    pub name: String
+    pub name: String,
+    pub item_type: ItemType
 }
 
 pub struct Inventory {
