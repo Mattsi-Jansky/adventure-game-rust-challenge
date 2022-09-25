@@ -89,7 +89,7 @@ impl GameState {
                         last_message: GameMessage {
                             contents: String::from("You drink the Potion."),
                         },
-                        inventory: self.inventory.with(item),
+                        inventory: self.inventory.without(index),
                         health: self.health + 1,
                         ..self
                     }),
@@ -97,7 +97,7 @@ impl GameState {
                         last_message: GameMessage {
                             contents: String::from("You drink the venom (For some reason???)."),
                         },
-                        inventory: self.inventory.with(item),
+                        inventory: self.inventory.without(index),
                         health: self.health - 1,
                         ..self
                     }),
@@ -207,15 +207,33 @@ mod tests {
         game.assert_message("Your inventory:\nNothing.");
     }
 
-    // #[test]
-    // fn pickup_item_and_using_it_removes_the_item() {
-    //     let game_state = GameState::new();
-    //     let game = game_state.process(String::from("pickup 1"));
-    //     let game = game.process("inventory");
-    //     game.assert_message("Your inventory:\n1: Potion");
-    //     let game = game.process("use 1");
-    //     game.assert_message("Your inventory:\nNothing");
-    // }
+    #[test]
+    fn pickup_potion_and_using_it_removes_the_item() {
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("pickup 1"));
+        let game = game.process("inventory");
+        game.assert_message("Your inventory:\n1: Potion");
+        let game = game.process("use 1");
+        let game = game.process("inventory");
+        game.assert_message("Your inventory:\nNothing.");
+    }
+
+    #[test]
+    fn pickup_venom_and_using_it_removes_the_item() {
+        let game_state = GameState::from(Area::new(
+            "Your feet rest upon green meadows.",
+            vec![Item {
+                name: String::from("Venom"),
+                item_type: ItemType::Venom,
+            }],
+        ));
+        let game = game_state.process(String::from("pickup 1"));
+        let game = game.process("inventory");
+        game.assert_message("Your inventory:\n1: Venom");
+        let game = game.process("use 1");
+        let game = game.process("inventory");
+        game.assert_message("Your inventory:\nNothing.");
+    }
 
     #[test]
     fn picked_up_items_no_longer_in_area() {
