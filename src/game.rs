@@ -106,7 +106,9 @@ impl GameState {
             "exit" => Game::NotRunning(String::from("Ye hath not the faith to go on")),
             "help" => Game::Running(GameState {
                 last_message: GameMessage {
-                    contents: String::from("Known commands are:\nlook\npickup\nexit\nhelp"),
+                    contents: String::from(
+                        "Known commands are:\nlook\npickup\ninventory\nuse\nstatus\nexit\nhelp",
+                    ),
                 },
                 ..self
             }),
@@ -216,6 +218,9 @@ mod tests {
         game.assert_message_contains("pickup");
         game.assert_message_contains("exit");
         game.assert_message_contains("help");
+        game.assert_message_contains("inventory");
+        game.assert_message_contains("status");
+        game.assert_message_contains("use");
     }
 
     #[test]
