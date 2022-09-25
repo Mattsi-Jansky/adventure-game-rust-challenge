@@ -142,6 +142,20 @@ mod tests {
             }
         }
 
+        fn assert_message_contains(&self, expected_pattern: &str) {
+            match self {
+                Game::Running(game_state) => {
+                    assert_eq!(
+                        true,
+                        game_state.last_message.contents.contains(expected_pattern)
+                    );
+                }
+                Game::NotRunning(final_message) => {
+                    assert_eq!(true, final_message.to_owned().contains(expected_pattern));
+                }
+            }
+        }
+
         fn process(self, command: &str) -> Game {
             match self {
                 Game::Running(game_state) => game_state.process(String::from(command)),
@@ -198,7 +212,10 @@ mod tests {
     fn print_help_message() {
         let game_state = GameState::new();
         let game = game_state.process(String::from("help"));
-        game.assert_message("Known commands are:\nlook\npickup\nexit\nhelp");
+        game.assert_message_contains("look");
+        game.assert_message_contains("pickup");
+        game.assert_message_contains("exit");
+        game.assert_message_contains("help");
     }
 
     #[test]
