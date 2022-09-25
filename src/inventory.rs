@@ -5,7 +5,8 @@ use std::ops::Index;
 
 #[derive(Clone)]
 pub enum ItemType {
-    Potion
+    Potion,
+    Venom
 }
 
 #[derive(Clone)]

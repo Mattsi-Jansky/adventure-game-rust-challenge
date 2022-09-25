@@ -37,6 +37,15 @@ impl GameState {
         }
     }
 
+    pub(crate) fn from(area: Area) -> GameState {
+        GameState {
+            last_message: GameMessage { contents: String::new() },
+            inventory: Inventory::new(),
+            area,
+            health: 10
+        }
+    }
+
     pub(crate) fn process(self, input: String) -> Game {
         let inputs = input.split_whitespace().collect::<Vec<&str>>();
         match inputs[0] {
@@ -91,7 +100,9 @@ impl GameState {
 
 #[cfg(test)]
 mod tests {
+    use crate::{Area, Inventory, Item};
     use crate::game::{Game, GameState};
+    use crate::inventory::ItemType;
 
     impl Game {
         fn assert_message(&self, expected: &str) {
@@ -176,5 +187,20 @@ mod tests {
         game.assert_message("You drink the Potion.");
         let game = game.process("status");
         game.assert_message("Level:1\nHealth:11");
+    }
+
+    #[test]
+    fn drinking_venom_decreases_health() {
+        let game_state = GameState::from(
+            Area::new("Your feet rest upon green meadows.",
+            vec![
+                    Item { name: String::from("Venom"), item_type: ItemType::Venom }
+                ]
+        ));
+        let game = game_state.process(String::from("pickup 1"));
+        let game = game.process("use 1");
+        game.assert_message("You drink the venom (For some reason???).");
+        let game = game.process("status");
+        game.assert_message("Level:1\nHealth:9");
     }
 }
