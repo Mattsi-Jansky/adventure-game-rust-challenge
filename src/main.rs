@@ -10,6 +10,7 @@ use crate::game::{Game, GameState};
 
 mod inventory;
 mod area;
+pub mod commands;
 mod game;
 
 fn main() {

@@ -1,4 +1,6 @@
 use crate::area::Area;
+use crate::commands::command::Command;
+use crate::commands::look_command::LookCommand;
 use crate::inventory::{Inventory, ItemType};
 
 pub struct GameMessage {
@@ -24,9 +26,9 @@ pub enum Game {
 
 pub struct GameState {
     pub last_message: GameMessage,
-    inventory: Inventory,
-    area: Area,
-    health: usize,
+    pub(crate) inventory: Inventory,
+    pub(crate) area: Area,
+    pub(crate) health: usize,
 }
 
 impl GameState {
@@ -55,10 +57,10 @@ impl GameState {
     pub(crate) fn process(self, input: String) -> Game {
         let inputs = input.split_whitespace().collect::<Vec<&str>>();
         match inputs[0] {
-            "look" => Game::Running(GameState {
-                last_message: self.area.look(),
-                ..self
-            }),
+            "look" => {
+                let command = LookCommand {};
+                command.execute(self)
+            },
             "pickup" => {
                 let index = inputs[1].parse::<usize>().unwrap() - 1;
                 let item = self.area.get_from_inventory(&index);
