@@ -1,13 +1,5 @@
 use crate::area::Area;
-use crate::commands::command::Command;
-use crate::commands::default_command::DefaultCommand;
-use crate::commands::exit_command::ExitCommand;
-use crate::commands::help_command::HelpCommand;
-use crate::commands::inventory_command::InventoryCommand;
-use crate::commands::look_command::LookCommand;
-use crate::commands::pickup_command::PickupCommand;
-use crate::commands::status_command::StatusCommand;
-use crate::commands::use_command::UseCommand;
+use crate::commands::command::select_command;
 use crate::inventory::Inventory;
 
 pub struct GameMessage {
@@ -64,40 +56,8 @@ impl GameState {
     pub(crate) fn process(self, input: String) -> Game {
         let inputs = input.split_whitespace().collect::<Vec<&str>>();
 
-        match inputs[0] {
-            "look" => {
-                let command = LookCommand {};
-                command.execute(self, inputs)
-            }
-            "pickup" => {
-                let command = PickupCommand {};
-                command.execute(self, inputs)
-            }
-            "inventory" => {
-                let command = InventoryCommand {};
-                command.execute(self, inputs)
-            }
-            "status" => {
-                let command = StatusCommand {};
-                command.execute(self, inputs)
-            }
-            "use" => {
-                let command = UseCommand {};
-                command.execute(self, inputs)
-            }
-            "exit" => {
-                let command = ExitCommand {};
-                command.execute(self, inputs)
-            }
-            "help" => {
-                let command = HelpCommand {};
-                command.execute(self, inputs)
-            }
-            _ => {
-                let command = DefaultCommand {};
-                command.execute(self, inputs)
-            }
-        }
+        let command = select_command(inputs[0]);
+        command.execute(self, inputs)
     }
 }
 
