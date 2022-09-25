@@ -206,6 +206,17 @@ mod tests {
         let game = game_state.process(String::from("inventory"));
         game.assert_message("Your inventory:\nNothing.");
     }
+
+    // #[test]
+    // fn pickup_item_and_using_it_removes_the_item() {
+    //     let game_state = GameState::new();
+    //     let game = game_state.process(String::from("pickup 1"));
+    //     let game = game.process("inventory");
+    //     game.assert_message("Your inventory:\n1: Potion");
+    //     let game = game.process("use 1");
+    //     game.assert_message("Your inventory:\nNothing");
+    // }
+
     #[test]
     fn picked_up_items_no_longer_in_area() {
         let game_state = GameState::new();
