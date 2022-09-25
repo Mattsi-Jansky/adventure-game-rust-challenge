@@ -201,6 +201,12 @@ mod tests {
     }
 
     #[test]
+    fn inventory_at_beginning() {
+        let game_state = GameState::new();
+        let game = game_state.process(String::from("inventory"));
+        game.assert_message("Your inventory:\nNothing.");
+    }
+    #[test]
     fn picked_up_items_no_longer_in_area() {
         let game_state = GameState::new();
         let game = game_state.process(String::from("pickup 1"));
