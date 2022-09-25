@@ -87,7 +87,7 @@ impl GameState {
                 match item.item_type {
                     ItemType::Potion => Game::Running(GameState {
                         last_message: GameMessage {
-                            contents: String::from(String::from("You drink the Potion.")),
+                            contents: String::from("You drink the Potion."),
                         },
                         inventory: self.inventory.with(item),
                         health: self.health + 1,
