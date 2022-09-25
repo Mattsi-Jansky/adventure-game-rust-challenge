@@ -1,10 +1,17 @@
 use crate::area::Area;
 use crate::commands::command::Command;
+use crate::commands::default_command::DefaultCommand;
+use crate::commands::exit_command::ExitCommand;
+use crate::commands::help_command::HelpCommand;
+use crate::commands::inventory_command::InventoryCommand;
 use crate::commands::look_command::LookCommand;
-use crate::inventory::{Inventory, ItemType};
+use crate::commands::pickup_command::PickupCommand;
+use crate::commands::status_command::StatusCommand;
+use crate::commands::use_command::UseCommand;
+use crate::inventory::Inventory;
 
 pub struct GameMessage {
-    contents: String,
+    pub(crate) contents: String,
 }
 
 impl GameMessage {
@@ -56,73 +63,40 @@ impl GameState {
 
     pub(crate) fn process(self, input: String) -> Game {
         let inputs = input.split_whitespace().collect::<Vec<&str>>();
+
         match inputs[0] {
             "look" => {
                 let command = LookCommand {};
-                command.execute(self)
-            },
+                command.execute(self, inputs)
+            }
             "pickup" => {
-                let index = inputs[1].parse::<usize>().unwrap() - 1;
-                let item = self.area.get_from_inventory(&index);
-                Game::Running(GameState {
-                    last_message: GameMessage {
-                        contents: String::from(format!("You pickup the {}", item.name)),
-                    },
-                    inventory: self.inventory.with(item),
-                    area: self.area.without_item(index),
-                    ..self
-                })
+                let command = PickupCommand {};
+                command.execute(self, inputs)
             }
-            "inventory" => Game::Running(GameState {
-                last_message: self.inventory.look(),
-                ..self
-            }),
-            "status" => Game::Running(GameState {
-                last_message: GameMessage {
-                    contents: format!("Level:{}\nHealth:{}", 1, self.health),
-                },
-                ..self
-            }),
+            "inventory" => {
+                let command = InventoryCommand {};
+                command.execute(self, inputs)
+            }
+            "status" => {
+                let command = StatusCommand {};
+                command.execute(self, inputs)
+            }
             "use" => {
-                let index = inputs[1].parse::<usize>().unwrap() - 1;
-                let item = self.inventory[&index].clone();
-                match item.item_type {
-                    ItemType::Potion => Game::Running(GameState {
-                        last_message: GameMessage {
-                            contents: String::from("You drink the Potion."),
-                        },
-                        inventory: self.inventory.without(index),
-                        health: self.health + 1,
-                        ..self
-                    }),
-                    ItemType::Venom => Game::Running(GameState {
-                        last_message: GameMessage {
-                            contents: String::from("You drink the venom (For some reason???)."),
-                        },
-                        inventory: self.inventory.without(index),
-                        health: self.health - 1,
-                        ..self
-                    }),
-                }
+                let command = UseCommand {};
+                command.execute(self, inputs)
             }
-            "exit" => Game::NotRunning(String::from("Ye hath not the faith to go on")),
-            "help" => Game::Running(GameState {
-                last_message: GameMessage {
-                    contents: String::from(
-                        "Known commands are:\nlook\npickup\ninventory\nuse\nstatus\nexit\nhelp",
-                    ),
-                },
-                ..self
-            }),
-            _ => Game::Running(GameState {
-                last_message: GameMessage {
-                    contents: format!(
-                        "Ye sepaketh nonsense, I know not the command '{}'. Try 'help'.",
-                        inputs[0]
-                    ),
-                },
-                ..self
-            }),
+            "exit" => {
+                let command = ExitCommand {};
+                command.execute(self, inputs)
+            }
+            "help" => {
+                let command = HelpCommand {};
+                command.execute(self, inputs)
+            }
+            _ => {
+                let command = DefaultCommand {};
+                command.execute(self, inputs)
+            }
         }
     }
 }

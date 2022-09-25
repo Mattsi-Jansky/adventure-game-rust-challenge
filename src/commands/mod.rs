@@ -1,2 +1,9 @@
 pub mod command;
+pub mod exit_command;
+pub mod help_command;
+pub mod inventory_command;
 pub mod look_command;
+pub mod pickup_command;
+pub mod status_command;
+pub mod use_command;
+pub mod default_command;
