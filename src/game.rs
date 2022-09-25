@@ -65,7 +65,7 @@ impl GameState {
 mod tests {
     use crate::game::{Game, GameState};
     use crate::inventory::ItemType;
-    use crate::{Area, Inventory, Item};
+    use crate::{Area, Item};
 
     impl Game {
         fn assert_message(&self, expected: &str) {
